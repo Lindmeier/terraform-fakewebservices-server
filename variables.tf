@@ -18,7 +18,7 @@ variable "dbSize" {
   type = number
   default = 256
   validation {   
-    condition     = var.serverCount > 128 
+    condition     = var.dbSize > 128 
     error_message = "dbSize has to be greater than 128." 
   }
 }

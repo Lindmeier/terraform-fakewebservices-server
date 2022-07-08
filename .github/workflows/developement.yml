@@ -43,7 +43,7 @@ jobs:
         working-dir: .
         output-file: README.md
         output-method: inject
-        git-push: "true"
+        #git-push: "true"
         config-file: '.terraform-docs.yml'
 
     - name: Git Version
@@ -60,6 +60,10 @@ jobs:
       run: |
         id=$(echo ${{ steps.git-version.outputs.version }} | cut -d- -f1)
         echo "::set-output name=id::$id"
+    - id: get-latest-commit
+      run: |
+        commit=$(git rev-parse HEAD)
+        echo "::set-output name=commit::$commit"
     - name: Git Tag
       uses: pkgdeps/git-tag-action@v2.0.1
       with:

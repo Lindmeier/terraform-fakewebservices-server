@@ -1,0 +1,72 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "develop" branch
+  push:
+    branches: [ "develop" ]
+  pull_request:
+    branches: [ "develop" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: hashicorp/setup-terraform@v2
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.ref }}
+
+    - name: Terraform fmt
+      id: fmt
+      run: terraform fmt 
+     
+    - name: Terraform Init
+      id: init
+      run: terraform init
+
+    - name: Terraform Validate
+      id: validate
+      run: terraform validate -no-color
+
+
+     
+    - name: Render terraform docs inside the README.md and push changes back to PR branch
+      uses: terraform-docs/gh-actions@v1.0.0
+      with:
+        working-dir: .
+        output-file: README.md
+        output-method: inject
+        git-push: "true"
+        config-file: '.terraform-docs.yml'
+
+    - name: Git Version
+      # You may pin to the exact commit or the version.
+      # uses: codacy/git-version@fa06788276d7492a2af01662649696d249ecf4cb
+      id: git-version
+      uses: codacy/git-version@2.4.0
+      with:
+        # The name of the release branch
+        release-branch: master
+        # The name of the dev branch
+        dev-branch: develop
+    - id: get-id
+      run: |
+        id=$(echo ${{ steps.git-version.outputs.version }} | cut -d- -f1)
+        echo "::set-output name=id::$id"
+    - name: Git Tag
+      uses: pkgdeps/git-tag-action@v2.0.1
+      with:
+        # Git Tag version
+        version: ${{ steps.get-id.outputs.id }}
+        # use secrets.GITHUB_TOKEN
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        # GitHub repository path. Example) azu/test
+        github_repo: ${{ github.repository }}
+        git_commit_sha: ${{ github.sha }}
